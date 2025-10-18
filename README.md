@@ -47,7 +47,7 @@ Helper scripts:
 - `./scripts/failover_demo.sh` — cordons + drains one agent to simulate a VPS outage, probes routing to show traffic shifting, then (by default) uncordons.
 - `./scripts/clean.sh` — tears down the k3d cluster and local registry.
 
-## Option A: k3d (Docker-backed k3s)
+## k3d (Docker-backed k3s)
 
 1) Create a local registry and k3d cluster (once):
 
