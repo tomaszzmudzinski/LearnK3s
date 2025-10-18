@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapi
+  namespace: webapi-demo
+  labels:
+    app: webapi
+spec:
+  selector:
+    app: webapi
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

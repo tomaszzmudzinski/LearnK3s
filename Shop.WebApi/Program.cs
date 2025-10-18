@@ -1,7 +1,5 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -12,7 +10,23 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// Add lightweight tracing headers so we can see which pod/node served the request
+app.Use(async (ctx, next) =>
+{
+    var podName = Environment.GetEnvironmentVariable("POD_NAME") ?? Environment.MachineName;
+    var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? "unknown";
+    ctx.Response.OnStarting(() =>
+    {
+        ctx.Response.Headers["X-Pod-Name"] = podName;
+        ctx.Response.Headers["X-Node-Name"] = nodeName;
+        return Task.CompletedTask;
+    });
+    await next();
+});
+
+app.MapGet("/", () => Results.Ok());
+
+app.MapGet("/health", () => Results.Ok("healthy"));
 
 var summaries = new[]
 {
@@ -32,6 +46,21 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+// Helpful endpoint to see routing clearly in the body
+app.MapGet("/whoami", (HttpContext ctx) =>
+{
+    var podName = Environment.GetEnvironmentVariable("POD_NAME") ?? Environment.MachineName;
+    var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? "unknown";
+    var podIp = ctx.Connection.LocalIpAddress?.ToString();
+    return Results.Ok(new
+    {
+        pod = podName,
+        node = nodeName,
+        podIp,
+        timeUtc = DateTime.UtcNow
+    });
+});
 
 app.Run();
 
